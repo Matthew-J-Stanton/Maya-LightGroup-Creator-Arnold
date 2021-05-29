@@ -1,0 +1,232 @@
+import pymel.core as pm
+import mtoa
+#Defines the class My window
+class MyWindow(object):   
+
+    #Creates an _imit_ method which will automatically run
+    def __init__(self):
+            
+            #Creates a variable name and assigns it the value my_win
+            self.name = "my_win"
+            
+            #Creates a variable title and assigns it the value test window
+            self.title = "test window"
+            
+            #Creates a name and a title for a window that shows if there are no lights in the scene
+            self.name_2 = "my_win_2"
+            
+            self.title_2 = "Warning"
+            
+            self.name_3 = "my_win_3"
+            
+            self.name_4 = "my_win_5"
+            
+            #Tries to delete a UI
+            try:
+                pm.deleteUI(self.name)
+                
+            #If it cannot delete a ui it just ignores it
+            except:
+                pass
+                
+            #Creates a variable win and assigns it to a window with the name equal to the name variable we created earlier and a title equal to the title variable we created earlier    
+            self.win = pm.window( self.name, title=self.title )
+            
+            
+            #Creates a variable mainlayout and assigns it a coloum layout
+            self.mainLayout = pm.columnLayout()
+            
+            #Creates a variable allObjects and assigns it the value of every object in the scene in a list
+            allObjects = pm.ls(l=True)
+            
+            #Creates an empty list called control_list that we'll use later
+            self.control_list = []
+            
+            #Creates a temporary variable that is used later
+            var_temp = 0
+            
+            #Createss a for loop that goes through the list allObjects
+            for obj in allObjects:
+                
+             
+                
+                #An if statement to check if the type of object is an aiAreaLight
+                if pm.nodeType(obj) == 'aiSkyDomeLight' or pm.nodeType(obj) == 'aiAreaLight' or pm.nodeType(obj) == 'aiPhotometricLight':
+                    
+                    #Creates a variable chk_layout and assigns it a horrizontal layout parented to the main layout
+                    self.chk_layout      = pm.horizontalLayout( parent=self.mainLayout )
+                    
+                    #Creates a second horizontal layout and assigns it the variable grp_name_layout
+                    self.grp_name_layout = pm.horizontalLayout( parent=self.mainLayout )           
+                    
+                    #Creates a variable obj_checkbox and assigns it a checkbox parented to the horizontal layout chk_layout   
+                    obj_checkbox = pm.checkBox( label="%s" %(obj), onCommand = self.showButtons, offCommand = self.showButtons, parent=self.chk_layout)
+                    
+                    #Creates a text with the label Light Group name and parents it to the horizontal layout grp_name_layout
+                    self.label = pm.text( label = 'Light Group name', parent = self.grp_name_layout )             
+                    
+                    #Creates a text field parented to the self.grp_name_layout horizontal layout
+                    texentry = pm.textField(parent = self.grp_name_layout)
+                    
+                    
+                    
+                    #Adds the check box and text field to the list control_list
+                    self.control_list.append( [obj_checkbox, texentry, self.label, obj] )       
+                    
+                    #Darkens the label and text field       
+                    pm.disable( self.label )
+                    pm.disable( texentry)
+                    
+                    #Redistributes the chk_layout and grp_name_layout horizontal layers so you can see everything on them           
+                    self.chk_layout.redistribute()
+                    self.grp_name_layout.redistribute()
+                    
+                    #Adds to the temporary variable if there is a light in the scene
+                    var_temp += 1
+                   
+            #Creates a bottom horizontal layer called bottom
+            self.bottom = pm.horizontalLayout(parent=self.mainLayout)
+                    
+            #Creates a button called apply_button 
+            apply_button = pm.button('Apply', command = self.applyButtons,  )
+                    
+            #If there are lights in the scene it shows the window
+            if var_temp > 0:
+                self.win.show()
+                
+            #Otherwise if there are no lights   
+            else:
+                
+                try:
+                    pm.deleteUI(self.name_2)
+                    
+                except:
+                    pass
+                
+                #It creates a new window
+                self.window2 = pm.window( self.name_2, title = self.title_2, height = 500, width = 200, sizeable = False)
+                
+                #Sets a coloum layout
+                self.mainLayout = pm.columnLayout()
+                
+                #Puts the text on it warning the user that there are no lights in the scene
+                pm.text( label='No lights in scene', font = 'fixedWidthFont', height = 50, width = 200 )
+                
+                #Shows the window
+                self.window2.show()
+                
+                    
+    #Creates a Method called showButtons                
+    def showButtons( self, *args ):
+        
+        #Creates a for loop for the list self.control 
+         for each in self.control_list:   
+            
+            #Checks if the check box is ticked
+            check_val = pm.checkBox( each[0], q=True, value=True )
+            
+            #creates an If statement for if the check box is ticked 
+            if check_val == True:
+                
+            
+                #If the check box is unticked it un-darkens the text field and label      
+                pm.disable( each[2] , v=False )
+                pm.disable( each[1] , v=False )
+                
+            #Otherwise if the checkbox is un-checked it hides the text field and label
+            elif check_val == False:
+                pm.disable( each[2] )
+                pm.disable( each[1] )
+            
+                
+            
+           
+    #creates a method apply buttons            
+    def applyButtons(self, *args):
+
+        #This cycles through the list self.control 
+        for i in self.control_list:
+            
+            #This checks that the check box is selected
+            check_val = pm.checkBox( i[0], q=True, value=True )
+            
+            #This takes whatever the user has inputted in the text field and sets it to the variable light_group_name
+            light_group_name = i[1].getText()
+            
+            #Creates a for loop for the letters in the variable light_group_name 
+            for l in light_group_name:
+                
+                #This checks that the whole light_group_name is either letters numbers or the characters - or _
+                if l.isalpha() == True:
+                    continue
+                elif l == "_" or l == "-":
+                    continue
+                elif l.isnumeric() == True:
+                    continue
+                
+                    
+                else:
+                    
+                    try:
+                        pm.deleteUI(self.name_3)
+                        
+                    except:
+                        pass
+                    #If there is any characters that cannot use in the light group name it opens this window
+                    self.window3 = pm.window( self.name_3, title = self.title_2, height = 100, width = 500, sizeable = False)
+                
+                    #Sets a coloum layout
+                    self.mainLayout = pm.columnLayout()
+                
+                    #Puts the text on it warning the user that tells the user to only use acceptable characters and then stops the function
+                    pm.text( label='Please only use letters, numbers or - and _ in the light group name ', font = 'fixedWidthFont', height = 50, width = 500 )
+                    self.window3.show()
+                    return
+            if check_val == True:     
+                if light_group_name == "":
+                
+                    try:
+                        pm.deleteUI(self.name_4)
+                    
+                    except:
+                        pass
+                    
+                    self.window4 = pm.window( self.name_4, title = self.title_2, height = 100, width = 500, sizeable = False)
+                
+                	#Sets a coloum layout
+                    self.mainLayout = pm.columnLayout()
+                
+                	#Puts the text on it warning the user that there are no lights in the scene
+                    pm.text( label='Please enter a name for every light group selected', font = 'fixedWidthFont', height = 100, width = 500 )
+                    self.window4.show()
+                    return
+                
+                	#Shows the window
+                else:
+                    pass
+            else:
+                pass
+                
+                
+            #If the check box has been selected it runs this if statement
+            if check_val == True: 
+                
+                #This cteates a aov with the same name as the light group
+                obj_aov = mtoa.aovs.AOVInterface().addAOV('%s_AOV' %(light_group_name), aovType='rgb')
+                
+                #This sets the light group name on the light to whatever the user inputted
+                pm.setAttr( '%s.aiAov' %(i[3]) , "%s" %(light_group_name))
+                
+                #This sets the light path expression on the new aov to the light group so in the arnold render view you can see the light groups
+                pymel_aov = pm.PyNode( obj_aov.node )
+                pymel_aov.lightPathExpression.set("C.*<L.\'%s\'>"%(str(light_group_name)))
+                
+            #If the checkbox has not been selected it continues past the light
+            else:
+                continue
+                
+        #It then closes the UI        
+        pm.deleteUI(self.name)
+        
+#Calls on the class MyWindow        
+MyWindow()
